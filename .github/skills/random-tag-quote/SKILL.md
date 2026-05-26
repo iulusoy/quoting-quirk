@@ -1,6 +1,6 @@
 ---
 name: random-tag-quote
-description: 'Provide a random quote from Abirate/english_quotes by user-provided tag. Use when users ask for an inspirational, topical, or mood-based quote by tag.'
+description: 'Provide a random quote from Abirate/english_quotes by user-provided tag. Use when users ask for an inspirational, topical, or mood-based quote by tag, especially when they say "now I need a <tag> quote".'
 argument-hint: 'tag (example: humor, life, love, success)'
 ---
 
@@ -12,18 +12,21 @@ Return one random quote from the Hugging Face dataset `Abirate/english_quotes` u
 - User asks for a random quote with a specific tag.
 - User wants a quote matching a mood or topic.
 - User asks for a quote from `Abirate/english_quotes`.
+- User says: "now I need a <tag> quote".
+
 
 ## Procedure
 1. Extract the requested tag from the user prompt.
 2. If no tag is provided, ask for one tag before continuing.
-3. Run the skill script in the `genai` Conda environment: `conda run -n genai python .github/skills/random-tag-quote/scripts/get_random_tag_quote.py <tag>`.
-4. The script loads the dataset `Abirate/english_quotes` and uses the `train` split.
-5. The script normalizes tag comparison with lowercase matching.
-6. If no quotes match, the script reports that clearly and suggests nearby options:
+3. Do not create or configure a virtual environment (venv/virtualenv/pipenv/poetry) for this skill.
+4. Run the skill script in the `genai` Conda environment: `conda run -n genai python .github/skills/random-tag-quote/scripts/get_random_tag_quote.py <tag>`.
+5. The script loads the dataset `Abirate/english_quotes` and uses the `train` split.
+6. The script normalizes tag comparison with lowercase matching.
+7. If no quotes match, the script reports that clearly and suggests nearby options:
    - Show up to 10 available tags from `tags.txt` (if present).
    - Otherwise derive tags from dataset and suggest up to 10 close matches.
-7. If matches exist, the script chooses exactly one random item.
-8. Return the script result in a concise response with:
+8. If matches exist, the script chooses exactly one random item.
+9. Return the script result in a concise response with:
    - Quote text
    - Author
    - Matched tag
