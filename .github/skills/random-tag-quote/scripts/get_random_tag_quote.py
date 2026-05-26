@@ -1,13 +1,41 @@
 import argparse
+import json
 import random
 from pathlib import Path
 
 from datasets import load_dataset
 
 
-def load_train_split():
+LOCAL_CACHE_PATH = Path(".cache/english_quotes_train.json")
+
+
+def load_train_from_local_cache(cache_path=LOCAL_CACHE_PATH):
+    with cache_path.open("r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def maybe_write_local_cache(train, cache_path=LOCAL_CACHE_PATH):
+    if cache_path.exists():
+        return
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
+    rows = [
+        {"quote": row["quote"], "author": row["author"], "tags": row["tags"]}
+        for row in train
+    ]
+    with cache_path.open("w", encoding="utf-8") as f:
+        json.dump(rows, f, ensure_ascii=False)
+
+
+def load_train_split(offline=False):
+    if offline:
+        if not LOCAL_CACHE_PATH.exists():
+            raise FileNotFoundError(LOCAL_CACHE_PATH)
+        return load_train_from_local_cache(LOCAL_CACHE_PATH)
+
     ds = load_dataset("Abirate/english_quotes")
-    return ds["train"]
+    train = ds["train"]
+    maybe_write_local_cache(train)
+    return train
 
 
 def all_tags_from_train(train):
@@ -27,11 +55,11 @@ def tags_from_workspace_files():
 
 def filtered_quotes_by_tag(train, tag):
     normalized = tag.strip().lower()
-    return [
-        example
-        for example in train
-        if normalized in {item.lower() for item in example["tags"]}
-    ]
+    matches = []
+    for example in train:
+        if any(normalized == item.lower() for item in example["tags"]):
+            matches.append(example)
+    return matches
 
 
 def main():
@@ -44,12 +72,26 @@ def main():
         action="store_true",
         help="Print all available tags and exit.",
     )
+    parser.add_argument(
+        "--offline",
+        action="store_true",
+        help="Use local quote cache only (no network calls).",
+    )
     args = parser.parse_args()
 
-    train = load_train_split()
-    dataset_tags = all_tags_from_train(train)
+    try:
+        train = load_train_split(offline=args.offline)
+    except Exception as exc:
+        if args.offline:
+            print(
+                "Offline mode failed: local cache not available. "
+                "Run once without --offline to populate .cache/english_quotes_train.json."
+            )
+            raise SystemExit(3) from exc
+        raise
 
     if args.list_tags:
+        dataset_tags = all_tags_from_train(train)
         print("Available tags:")
         for tag in dataset_tags:
             print(tag)
@@ -62,6 +104,7 @@ def main():
 
     matches = filtered_quotes_by_tag(train, args.tag)
     if not matches:
+        dataset_tags = all_tags_from_train(train)
         suggestion_source = tags_from_workspace_files() or dataset_tags
         suggestions = ", ".join(suggestion_source[:10])
         print(f"No quotes found for tag '{args.tag}'.")

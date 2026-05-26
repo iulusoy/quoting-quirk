@@ -20,7 +20,7 @@ Return one random quote from the Hugging Face dataset `Abirate/english_quotes` u
 2. If no tag is provided, ask for one tag before continuing.
 3. Do not create or configure a virtual environment (venv/virtualenv/pipenv/poetry) for this skill.
 4. Run the skill script in the `genai` Conda environment: `conda run -n genai python .github/skills/random-tag-quote/scripts/get_random_tag_quote.py <tag>`.
-5. The script loads the dataset `Abirate/english_quotes` and uses the `train` split.
+5. Optional fast path: use local cache only with `--offline` after cache exists.
 6. The script normalizes tag comparison with lowercase matching.
 7. If no quotes match, the script reports that clearly and suggests nearby options:
    - Show up to 10 available tags from `tags.txt` (if present).
@@ -47,3 +47,4 @@ Return one random quote from the Hugging Face dataset `Abirate/english_quotes` u
 - Script options:
    - `conda run -n genai python .github/skills/random-tag-quote/scripts/get_random_tag_quote.py --list-tags`
    - `conda run -n genai python .github/skills/random-tag-quote/scripts/get_random_tag_quote.py humor`
+   - `conda run -n genai python .github/skills/random-tag-quote/scripts/get_random_tag_quote.py --offline humor`
